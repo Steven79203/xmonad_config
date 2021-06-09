@@ -78,9 +78,9 @@ myLayout =  toggleLayouts (noBorders Full) $
 
 -- Rotina de autoinicialização
 myStartupHook = do
-  spawnOnce "xsetroot -cursor_name left_ptr"
-  spawnOnce "~/scripts/autostart"
-  spawn     "~/scripts/start_polybar"
+    spawnOnce "xsetroot -cursor_name left_ptr"
+    spawnOnce "~/scripts/autostart"
+--  spawn     "~/scripts/start/polybar"
 
 -- Cor da borda em foco e fora de foco
 myNormalBorderColor  = "#333333"
@@ -91,9 +91,16 @@ myTerminal    = "alacritty"
 myModMask     = mod4Mask 
 myBorderWidth = 2
 
+myBar = "xmobar"
+myPP = xmobarPP {ppCurrent = xmobarColor "#FF73EC" "" . wrap "|" "|"
+				,ppTitle   = xmobarColor "#FF73EC" "" . shorten 60}
+
+toggleStrutsKey XConfig {XMonad.modMask = modMask} = (modMask, xK_c)
+
 -- Função principal
 main :: IO()
-main = xmonad $ docks $ ewmh $ F.fullscreenSupport $ myConfig
+main = do
+	xmonad . docks . ewmh . F.fullscreenSupport =<< statusBar myBar myPP toggleStrutsKey myConfig
 
 myConfig = def 
 	{
@@ -118,7 +125,7 @@ myConfig = def
     , handleEventHook        = handleEventHook def <+> 
                                F.fullscreenEventHook  <+> 
                                ewmhDesktopsEventHook
-    --, logHook              = myLogHook
+    , logHook                = dynamicLogWithPP $ myPP
     , startupHook            = myStartupHook
     }
     `additionalKeysP` 
@@ -135,7 +142,7 @@ myConfig = def
 
     -- Sair do XMonad
     , ("M-S-e", confirmPrompt defaultXPConfig "exit" $ io exitSuccess)
-    , ("M-S-r", spawn "if type xmonad; then xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi")
+    , ("M-S-r", spawn "if type xmonad; then pkill xmobar; xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi")
     , ("M-S-q", kill)
 
 	-- Desligar/Reiniciar/Sair
@@ -170,7 +177,7 @@ myConfig = def
 	,("M-v", spawn "alacritty -e nvim")
 
 	-- Thunar
-	,("M-S-t", spawn "thunar")
+	,("M-S-t", spawn "pcmanfm")
 
 	-- Rotate Screen
 	,("M-S-x", spawn "~/scripts/rotate")
