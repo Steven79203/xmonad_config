@@ -6,23 +6,19 @@ import XMonad
 
 -- Date Types
 import Data.Ratio
-
--- Prompt 
-import XMonad.Prompt
-import XMonad.Prompt.ConfirmPrompt
-
-import XMonad.Config.Desktop
+import Data.Char
 
 -- Actions
 import XMonad.Actions.CycleWS
 import XMonad.Actions.CopyWindow
 import qualified XMonad.Actions.FlexibleManipulate as Flex
+import XMonad.Actions.FloatKeys
 
 -- Hooks
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.WindowSwallowing
 
 -- Utils
 import XMonad.Util.EZConfig
@@ -33,172 +29,181 @@ import XMonad.Util.SpawnOnce
 import XMonad.Layout
 import XMonad.Layout.Spacing
 import XMonad.Layout.NoBorders
-import XMonad.Layout.Grid
 import XMonad.Layout.Hidden
-import XMonad.Layout.Magnifier
 import qualified XMonad.Layout.Fullscreen as F
 import XMonad.Layout.ToggleLayouts
-import XMonad.Layout.CenteredMaster
+import XMonad.Layout.Tabbed
+import XMonad.Layout.ResizableTile
 
 import qualified XMonad.StackSet as W
 
 import System.Exit
 
+scripts :: String
+scripts = "~/Scripts/x11"
 
 myManageHook :: ManageHook
 myManageHook = composeAll 
-               [ className =? "mpv" --> doRectFloat ( W.RationalRect (1 % 8) (1 % 8) (6 % 8) (6 % 8))
-               , className =? "Thunar" --> doShift "3" 
+               [ className =? "mpv"      --> doRectFloat ( W.RationalRect (1 % 15) (1 % 15) (13 % 15) (13 % 15))
+               , className =? "Ncmpcpp"  --> doRectFloat ( W.RationalRect (1 % 15) (1 % 15) (13 % 15) (13 % 15))
+               , className =? "mpv"  --> doShift "4"
+               , className =? "lf"   --> doShift "3" 
+               , className =? "Gimp" --> doShift "5"
+               , className =? "Code" --> doShift "6"
+               , className =? "Ncmpcpp"     --> doShift "8"
+               , className =? "firefox"     --> doShift "1"
+               , className =? "Chromium"    --> doShift "1"
+               , className =? "librewolf"   --> doShift "2"
+               , className =? "Tor Browser" --> doShift "2"
+               , className =? "qBittorrent" --> doShift "5"
                , className =? "Pavucontrol" --> doFloat
-               , className =? "Blueman-manager" --> doFloat ]
+               , className =? "Blueman-manager"      --> doFloat
+               , className =? "Nm-connection-editor" --> doFloat
+               ]
 
 -- Layouts 
-            -- Toggle to Fullscreen
-myLayout =  toggleLayouts (noBorders Full) $
-
- 			-- Gaps
-            spacingRaw False (Border 0 sp sp sp) 
-            True (Border sp sp sp sp) True $ 
-            
-            -- Misc
+myLayout =  toggleLayouts 
+                 (noBorders Full) $
+            spacingRaw False 
+                 (Border 0 sp sp sp) 
+                 True 
+                 (Border sp sp sp sp) 
+                 True $  
             hiddenWindows $ avoidStruts $ 
-            smartBorders $ F.fullscreenFull
-           
-            -- Main Layouts
-            (tiled ||| Grid ||| Mirror tiled ||| Full)
-		where
-			-- Espaçamento do gaps em pixels
-			sp      = 4
-			-- Tiling Layout 
-			tiled   = Tall nmaster delta ratio
-			-- Parâmetros gerais
-			nmaster = 1
-			ratio   = 2/3
-			delta   = 2/100
+            smartBorders  $ F.fullscreenFull 
+            (rezTiled ||| Mirror rezTiled ||| simpleTabbed ||| Full)
+        where
+            -- Espaçamento do gaps em pixels
+            sp       = 1
+            -- Resizable Tiled
+            rezTiled = ResizableTall nmaster delta ratio []
+            -- Parâmetros gerais
+            nmaster  = 1
+            ratio    = 70/100
+            delta    = 1/100
 
--- Rotina de autoinicialização
+-- Autostart
 myStartupHook = do
-    spawnOnce "xsetroot -cursor_name left_ptr"
-    spawnOnce "~/scripts/autostart"
---  spawn     "~/scripts/start/polybar"
+    spawn $ scripts ++ "/start_polybar"
 
 -- Cor da borda em foco e fora de foco
-myNormalBorderColor  = "#333333"
-myFocusedBorderColor = "#6E6290"
+myNormalBorderColor  = "#999999" 
+myFocusedBorderColor = "#ff0a2f"
 
--- Variáveis básicas
+-- Terminal, modkey e espessura da borda
 myTerminal    = "alacritty"
 myModMask     = mod4Mask 
 myBorderWidth = 2
 
-myBar = "xmobar"
-myPP = xmobarPP {ppCurrent = xmobarColor "#FF73EC" "" . wrap "|" "|"
-				,ppTitle   = xmobarColor "#FF73EC" "" . shorten 60}
-
-toggleStrutsKey XConfig {XMonad.modMask = modMask} = (modMask, xK_c)
-
 -- Função principal
 main :: IO()
-main = do
-	xmonad . docks . ewmh . F.fullscreenSupport =<< statusBar myBar myPP toggleStrutsKey myConfig
-
+main = xmonad $ docks $ ewmhFullscreen . ewmh $ myConfig
 myConfig = def 
-	{
+   {
    ------------------ Paramethers -----------------------
 	  terminal                  = myTerminal
-   -- , focusFollowsMouse       = myFocusFollowMouse
+--  , focusFollowsMouse         = myFocusFollowMouse
     , modMask                   = myModMask
     , borderWidth               = myBorderWidth
-   -- , workspaces              = myWorkspaces
+--  , workspaces                = myWorkspaces
     , XMonad.normalBorderColor  = myNormalBorderColor
     , XMonad.focusedBorderColor = myFocusedBorderColor
     
    ------------------ Key Bindings ----------------------
-   -- , keys                 = myKeys
-   -- , mouseBindings        = myMouseBindings
+--  , keys                 = myKeys
+--  , mouseBindings        = myMouseBindings
     
     ----------------- Hooks, Layouts --------------------
     , layoutHook             = myLayout
-    , manageHook             = manageHook def <+> 
+
+    , manageHook             = manageHook def         <+> 
                                F.fullscreenManageHook <+> 
                                myManageHook 
-    , handleEventHook        = handleEventHook def <+> 
-                               F.fullscreenEventHook  <+> 
-                               ewmhDesktopsEventHook
-    , logHook                = dynamicLogWithPP $ myPP
+
+    , handleEventHook        = handleEventHook def    <+> 
+    						   F.fullscreenEventHook  <+> 
+                               swallowEventHook 
+                            	  (className =? "Alacritty") 
+                            	  (return True)
+--  , logHook                = dynamicLogWithPP $ myPP
     , startupHook            = myStartupHook
     }
     `additionalKeysP` 
     [ ("M-<Return>", spawn myTerminal)
-
-    -- Mover o foco entre as janela
+	
+	-- Focus Window
     , ("M-<Left>"  , windows W.focusUp)
     , ("M-<Right>" , windows W.focusDown)
 
-    -- Mover as janelas na stack
+	-- Shring or Expand Individual Windows
+	,("M-i", sendMessage MirrorShrink)
+	,("M-o", sendMessage MirrorExpand)
+
+	-- Move windows in the stack
     , ("M-S-<Left>"  , windows W.swapUp)
     , ("M-S-<Right>" , windows W.swapDown)
     , ("M-a"         , windows W.swapMaster)
 
-    -- Sair do XMonad
-    , ("M-S-e", confirmPrompt defaultXPConfig "exit" $ io exitSuccess)
-    , ("M-S-r", spawn "if type xmonad; then pkill xmobar; xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi")
+	-- Restart XMonad 
+	, ("M-S-r", spawn "if type xmonad; then xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi")
+
+    -- Kill Window
     , ("M-S-q", kill)
 
-	-- Desligar/Reiniciar/Sair
-	, ("M-S-k", spawn "~/scripts/shutdown" )
-	-- Bloquear a tela
-	, ("M-b", spawn "~/scripts/i3lock")
-
-    -- Dmenu/Rofi
-    , ("M-d", spawn "rofi -show drun -show-icons")
-
-	-- Volume/Brightness
-	,("<XF86MonBrightnessUp>"   , spawn "xbacklight -inc 5" )
-	,("<XF86MonBrightnessDown>" , spawn "xbacklight -dec 5" )
-	,("<XF86AudioRaiseVolume>"  , spawn "pactl set-sink-volume @DEFAULT_SINK@ +5%")
-	,("<XF86AudioLowerVolume>"  , spawn "pactl set-sink-volume @DEFAULT_SINK@ -5%")
+	-- Volume/Brightness Up/Down/Mute
+	,("<XF86MonBrightnessUp>"   , spawn "polybar-msg action '#backlight-acpi.inc'" )
+	,("<XF86MonBrightnessDown>" , spawn "polybar-msg action '#backlight-acpi.dec'" )
+	,("<XF86AudioRaiseVolume>"  , spawn "pactl set-sink-volume @DEFAULT_SINK@ +5%" )
+	,("<XF86AudioLowerVolume>"  , spawn "pactl set-sink-volume @DEFAULT_SINK@ -5%" )
+	,("<XF86AudioMute>"         , spawn "pactl set-sink-mute @DEFAULT_SINK@ toggle")
 
 	-- Sticky Windows
-	,("M-g", windows copyToAll)
-	,("M-S-g", killAllOtherCopies)
+	,("M-g"   , windows copyToAll)
+	,("M-S-g" , killAllOtherCopies)
 
-	-- Cycle/Shift Through the WS
-	,("M-C-<Left>"  , prevWS)
-	,("M-C-<Right>" , nextWS )
-	,("M-S-C-<Left>", shiftToPrev >> prevWS)
-	,("M-S-C-<Right>", shiftToNext >> nextWS)
-
-	-- Firefox
-	,("M-S-n", spawn "firefox")
-	,("M-S-m", spawn "firefox --private-window")
+	-- Cycle/Shift between WS
+	,("M-C-<Left>"    , moveTo Prev $ Not emptyWS)
+	,("M-C-<Right>"   , moveTo Next $ Not emptyWS)
+	,("M-S-C-<Left>"  , shiftToPrev >> prevWS)
+	,("M-S-C-<Right>" , shiftToNext >> nextWS)
 	
-	-- Editor
-	,("M-v", spawn "alacritty -e nvim")
-
-	-- Thunar
-	,("M-S-t", spawn "pcmanfm")
-
-	-- Rotate Screen
-	,("M-S-x", spawn "~/scripts/rotate")
-
-	-- Resolution
-	,("M-S-z", spawn "~/scripts/setresolution")
-
-	-- Toggle Redshift
-	,("M-S-l", spawn "~/scripts/toggle-rshf")
+	-- Cycle/Shift Between WS (alternative)
+	,("M-C-k"  , moveTo Prev $ Not emptyWS)
+	,("M-C-j"  , moveTo Next $ Not emptyWS)
+	,("M-S-C-j", shiftToPrev >> prevWS)
+	,("M-S-C-k", shiftToNext >> nextWS)
 	
-	-- PrintScreen
-	,("<Print>", spawn "gnome-screenshot --interactive")
-    
-	-- Hide/Show Windows
+	-- Hidden or Reveal Windows
 	,("M-S--", withFocused hideWindow)
-	,("M-S-=", popOldestHiddenWindow)
+	,("M-S-=", popNewestHiddenWindow)
 
-	-- Toggle Fullscreen Layout
-	,("M-S-f", sendMessage ToggleLayout)
+	-- Fullscreen
+	,("M-f",     sendMessage ToggleLayout)
+
+	-- Custom Scripts 
+	,("M-S-C-w" , spawn $ scripts ++ "/../get_dw_url"  )  -- Get URLs
+	,("M-S-C-c" , spawn $ scripts ++ "/../set_dw_url"  )  -- Set new URLS
+	,("M-y"     , spawn $ scripts ++ "/xmonad-keybinds")  -- List XMonad Keybinds
+	,("M-S-n"   , spawn $ scripts ++ "/edit_config"    )  -- Edit configuration files
+	,("M-S-x"   , spawn $ scripts ++ "/rotate"         )  -- Rotate screen
+	,("M-S-z"   , spawn $ scripts ++ "/setresolution"  )  -- Set screen resolution
+	,("M-S-l"   , spawn $ scripts ++ "/toggle-rshf"    )  -- Toggle Redshift
+	,("M-S-p"   , spawn $ scripts ++ "/shutdown"       )  -- Shutdown Prompt 
+	,("M-b"     , spawn $ scripts ++ "/i3lock"         )  -- i3lock wrapper
+	,("M-S-u"   , spawn $ scripts ++ "/urltompv"       )  -- Download or Play video on MPV
+
+	-- System commands
+	,("<Print>" , spawn "gnome-screenshot --interactive"                    )
+    ,("M-d"     , spawn "rofi -cache-dir /tmp/rofi -show drun -show-icons"  )
+    ,("M-<Tab>" , spawn "rofi -cache-dir /tmp/rofi -show window -show-icons")
+    ,("M-m"     , spawn "alacritty --title 'Ncmpcpp' --class 'Ncmpcpp' -e ncmpcpp")
+	,("M-r"     , spawn "alacritty --title 'FileManager' --class 'lf' -e lfub; rm -r /tmp/lf")
     ]
     `additionalMouseBindings`
     [ -- Flex Resize/Movimentation
       ((mod4Mask, button3), (\w -> focus w >> Flex.mouseWindow Flex.resize w))
     ]
+    `removeKeys`
+    [
+    (mod4Mask,xK_q)
+    ,(mod4Mask,xK_c)]
