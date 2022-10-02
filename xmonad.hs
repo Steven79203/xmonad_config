@@ -24,9 +24,11 @@ import XMonad.Hooks.WindowSwallowing
 import XMonad.Util.EZConfig
 import XMonad.Util.Ungrab
 import XMonad.Util.SpawnOnce
+import XMonad.Util.Image
 
 -- Layouts
 import XMonad.Layout
+import XMonad.Layout.DecorationMadness
 import XMonad.Layout.Spacing
 import XMonad.Layout.NoBorders
 import XMonad.Layout.Hidden
@@ -48,7 +50,7 @@ myManageHook = composeAll
                , className =? "Ncmpcpp"  --> doRectFloat ( W.RationalRect (1 % 15) (1 % 15) (13 % 15) (13 % 15))
                , className =? "mpv"  --> doShift "4"
                , className =? "lf"   --> doShift "3" 
-               , className =? "Gimp" --> doShift "5"
+               , className =? "Gimp-2.99" --> doShift "5"
                , className =? "Code" --> doShift "6"
                , className =? "Ncmpcpp"     --> doShift "8"
                , className =? "firefox"     --> doShift "1"
@@ -61,6 +63,19 @@ myManageHook = composeAll
                , className =? "Nm-connection-editor" --> doFloat
                ]
 
+-- Themes 
+myTabConfig = def { fontName = "xft:monospace:style=Bold:pixelsize=12:antialias=true:hinting=true" 
+				  , activeColor         = "#1F1F1F"
+				  , inactiveColor       = "#1F1F1F"
+				  , activeTextColor     = "#FFFFFF"
+				  , inactiveTextColor   = "#505050"
+				  , activeBorderColor   = "#FFFFFF"
+				  , inactiveBorderColor = "#A0A0A0"
+				  , activeBorderWidth   = 2
+				  , inactiveBorderWidth = 2
+				  , decoHeight          = 22
+				   }
+
 -- Layouts 
 myLayout =  toggleLayouts 
                  (noBorders Full) $
@@ -71,16 +86,16 @@ myLayout =  toggleLayouts
                  True $  
             hiddenWindows $ avoidStruts $ 
             smartBorders  $ F.fullscreenFull 
-            (rezTiled ||| Mirror rezTiled ||| simpleTabbed ||| Full)
+            (rezTiled ||| Mirror rezTiled ||| tabbed shrinkText myTabConfig ||| Full)
         where
             -- Espaçamento do gaps em pixels
-            sp       = 1
+            sp       = 3
             -- Resizable Tiled
             rezTiled = ResizableTall nmaster delta ratio []
             -- Parâmetros gerais
             nmaster  = 1
-            ratio    = 70/100
-            delta    = 1/100
+            ratio    = 60/100
+            delta    = 2/100
 
 -- Autostart
 myStartupHook = do
@@ -191,6 +206,7 @@ myConfig = def
 	,("M-S-p"   , spawn $ scripts ++ "/shutdown"       )  -- Shutdown Prompt 
 	,("M-b"     , spawn $ scripts ++ "/i3lock"         )  -- i3lock wrapper
 	,("M-S-u"   , spawn $ scripts ++ "/urltompv"       )  -- Download or Play video on MPV
+	,("M-c"     , spawn $ scripts ++ "/../clicker"     )  -- Clicker
 
 	-- System commands
 	,("<Print>" , spawn "gnome-screenshot --interactive"                    )

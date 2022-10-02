@@ -1,0 +1,8 @@
+$ ghc --make xmonad.hs -i -ilib -fforce-recomp -main-is main -dynamic -v0 -outputdir /home/estevao/.xmonad/build-x86_64-linux -o /home/estevao/.xmonad/xmonad-x86_64-linux
+
+xmonad.hs:68:1: warning: [-Wtabs]
+    Tab character found here, and in 97 further locations.
+    Please use spaces instead.
+   |
+68 |                                   , activeColor         = "#1F1F1F"
+   | ^^^^^^^^
